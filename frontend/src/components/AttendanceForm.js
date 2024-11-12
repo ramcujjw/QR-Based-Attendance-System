@@ -1,13 +1,40 @@
-// src/components/AttendanceForm.jsx
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import QRCode from 'qrcode.react';
-import { TextField, MenuItem, Button, Typography } from '@mui/material';
+import { TextField, MenuItem, Button, Typography, CircularProgress } from '@mui/material';
+import axios from 'axios';
 
 const AttendanceForm = () => {
+    // State hooks
+    const [students, setStudents] = useState([]);
+    const [selectedStudent, setSelectedStudent] = useState('');
     const [attendanceStatus, setAttendanceStatus] = useState('');
     const [date, setDate] = useState('');
     const [showQRCode, setShowQRCode] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // Fetch the list of students (assuming an API call)
+    useEffect(() => {
+        const fetchStudents = async () => {
+            setLoading(true);
+            try {
+                
+                const response = await axios.get('/api/students'); 
+                setStudents(response.data);
+            } catch (error) {
+                console.error('Error fetching students:', error);
+                alert('Failed to load students');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStudents();
+    }, []);
+
+    // Handle form input changes
+    const handleStudentChange = (event) => {
+        setSelectedStudent(event.target.value);
+    };
 
     const handleStatusChange = (event) => {
         setAttendanceStatus(event.target.value);
@@ -19,18 +46,39 @@ const AttendanceForm = () => {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (attendanceStatus && date) {
+        if (selectedStudent && attendanceStatus && date) {
             setShowQRCode(true);
         } else {
-            alert('Please select both attendance status and date');
+            alert('Please fill out all fields.');
         }
     };
 
     return (
         <div style={{ padding: '20px' }}>
-            <Typography variant="h5">Student Name: ramcy</Typography>
-            <Typography variant="h6">Subject Name: react</Typography>
-            
+            <Typography variant="h5">Attendance Form</Typography>
+
+            {/* Student Selection */}
+            {loading ? (
+                <CircularProgress />
+            ) : (
+                <TextField
+                    select
+                    label="Select Student"
+                    value={selectedStudent}
+                    onChange={handleStudentChange}
+                    fullWidth
+                    margin="normal"
+                    variant="outlined"
+                >
+                    {students.map((student) => (
+                        <MenuItem key={student._id} value={student._id}>
+                            {student.name}
+                        </MenuItem>
+                    ))}
+                </TextField>
+            )}
+
+            {/* Attendance Status */}
             <TextField
                 select
                 label="Attendance Status"
@@ -44,7 +92,8 @@ const AttendanceForm = () => {
                 <MenuItem value="Absent">Absent</MenuItem>
                 <MenuItem value="Late">Late</MenuItem>
             </TextField>
-            
+
+            {/* Date Picker */}
             <TextField
                 label="Select Date"
                 type="date"
@@ -57,7 +106,8 @@ const AttendanceForm = () => {
                     shrink: true,
                 }}
             />
-            
+
+            {/* Submit Button */}
             <Button
                 variant="contained"
                 color="primary"
@@ -67,11 +117,12 @@ const AttendanceForm = () => {
                 Submit
             </Button>
 
+            {/* QR Code Display */}
             {showQRCode && (
                 <div style={{ marginTop: '20px' }}>
                     <Typography variant="h6">Generated QR Code:</Typography>
                     <QRCode
-                        value={`Student: ramcy, Subject: react, Status: ${attendanceStatus}, Date: ${date}`}
+                        value={`Student: ${selectedStudent}, Status: ${attendanceStatus}, Date: ${date}`}
                         size={200}
                         level="H"
                         includeMargin={true}

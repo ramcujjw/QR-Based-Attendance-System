@@ -9,7 +9,7 @@ router.post('/take-attendance', async (req, res) => {
   const { classId, teacherId, subject, date } = req.body;
 
   try {
-    // Save attendance record (optional, based on if you want to store it)
+    // Save attendance record 
     const newAttendance = new Attendance({
       classId,
       teacherId,
